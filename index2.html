@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Expected Value Challenge</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        section { margin-bottom: 20px; }
+        table, th, td { border: 1px solid #333; border-collapse: collapse; padding: 4px 8px; }
+        #diceDisplay span { font-size: 40px; margin-right: 8px; }
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+    <h1>Expected Value Challenge</h1>
+    <section>
+        <label for="versionSelect">Choose a version:</label>
+        <select id="versionSelect">
+            <option value="1">Version 1: Single Die</option>
+            <option value="2">Version 2: Diversified Portfolio</option>
+            <option value="3">Version 3: Compounding/Correlation</option>
+        </select>
+        <button id="startBtn">Start Game</button>
+    </section>
+
+    <section id="rules"></section>
+
+    <section id="controls" class="hidden">
+        <div id="version1" class="hidden">
+            <button id="rollV1">Roll</button>
+        </div>
+        <div id="version2" class="hidden">
+            <label>Invest in A: <input type="number" id="allocA" value="34" min="0" max="100"></label>
+            <label>Invest in B: <input type="number" id="allocB" value="33" min="0" max="100"></label>
+            <label>Invest in C: <input type="number" id="allocC" value="33" min="0" max="100"></label>
+            <button id="rollV2">Roll</button>
+        </div>
+        <div id="version3" class="hidden">
+            <button id="rollV3">Roll Two Dice</button>
+        </div>
+    </section>
+
+    <section id="output" class="hidden">
+        <div id="diceDisplay"></div>
+        <p id="resultText"></p>
+        <p>Bankroll: $<span id="bankroll">100</span></p>
+    </section>
+
+    <script>
+        const payoutTable = {1:-5,2:-5,3:0,4:0,5:10,6:10};
+        const diceA = [-10,-10,0,0,20,20];
+        const diceB = [-5,0,0,5,5,5];
+        const diceC = [-1,0,0,1,1,1];
+        let bankroll = 100;
+        let currentVersion = 1;
+
+        const faces = ['\u2680','\u2681','\u2682','\u2683','\u2684','\u2685'];
+
+        function showRules(version){
+            const rules = document.getElementById('rules');
+            let html = '';
+            if(version===1){
+                html += '<h2>Version 1: Single Die</h2>';
+                html += '<table><tr><th>Roll</th><th>Payout</th></tr>';
+                for(let i=1;i<=6;i++){ html += `<tr><td>${i}</td><td>${payoutTable[i]}</td></tr>`; }
+                html += '</table>';
+                html += '<p>Roll the die each round. Add payout to your bankroll.</p>';
+            } else if(version===2){
+                html += '<h2>Version 2: Diversified Portfolio</h2>';
+                html += '<p>Allocate your $100 among three dice. Each die represents an investment.</p>';
+                html += '<table><tr><th>Die</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th></tr>';
+                html += `<tr><td>A</td>${diceA.map(v=>`<td>${v}</td>`).join('')}</tr>`;
+                html += `<tr><td>B</td>${diceB.map(v=>`<td>${v}</td>`).join('')}</tr>`;
+                html += `<tr><td>C</td>${diceC.map(v=>`<td>${v}</td>`).join('')}</tr>`;
+                html += '</table>';
+            } else if(version===3){
+                html += '<h2>Version 3: Compounding/Correlation</h2>';
+                html += '<p>Roll two dice. The first die uses the single-die payouts. The second die acts as a multiplier from 1x to 2x.</p>';
+                html += '<table><tr><th>Multiplier Die</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th></tr>';
+                html += '<tr><td>Multiplier</td><td>1x</td><td>1.2x</td><td>1.4x</td><td>1.6x</td><td>1.8x</td><td>2x</td></tr></table>';
+            }
+            rules.innerHTML = html;
+        }
+
+        function rollDie(){ return Math.floor(Math.random()*6)+1; }
+
+        function displayDice(values){
+            const div = document.getElementById('diceDisplay');
+            div.innerHTML = '';
+            values.forEach(v=>{
+                const span=document.createElement('span');
+                span.textContent = faces[v-1];
+                div.appendChild(span);
+            });
+        }
+
+        function updateBankroll(amount){
+            bankroll += amount;
+            document.getElementById('bankroll').textContent = bankroll.toFixed(2);
+        }
+
+        document.getElementById('startBtn').addEventListener('click', ()=>{
+            bankroll = 100;
+            document.getElementById('bankroll').textContent = bankroll;
+            currentVersion = parseInt(document.getElementById('versionSelect').value);
+            showRules(currentVersion);
+            document.getElementById('controls').classList.remove('hidden');
+            document.getElementById('output').classList.remove('hidden');
+            document.querySelectorAll('#controls > div').forEach(d=>d.classList.add('hidden'));
+            document.getElementById('version'+currentVersion).classList.remove('hidden');
+        });
+
+        document.getElementById('rollV1').addEventListener('click', ()=>{
+            const roll = rollDie();
+            displayDice([roll]);
+            const payout = payoutTable[roll];
+            document.getElementById('resultText').textContent = `You rolled ${roll} for payout ${payout}`;
+            updateBankroll(payout);
+        });
+
+        document.getElementById('rollV2').addEventListener('click', ()=>{
+            const allocA = parseFloat(document.getElementById('allocA').value)||0;
+            const allocB = parseFloat(document.getElementById('allocB').value)||0;
+            const allocC = parseFloat(document.getElementById('allocC').value)||0;
+            const total = allocA+allocB+allocC;
+            if(total===0){ return; }
+            const wA=allocA/total, wB=allocB/total, wC=allocC/total;
+            const rA=rollDie(), rB=rollDie(), rC=rollDie();
+            displayDice([rA,rB,rC]);
+            const payout = diceA[rA-1]*wA + diceB[rB-1]*wB + diceC[rC-1]*wC;
+            document.getElementById('resultText').textContent =
+                `Rolls A:${rA} B:${rB} C:${rC} payout ${payout.toFixed(2)}`;
+            updateBankroll(payout);
+        });
+
+        document.getElementById('rollV3').addEventListener('click', ()=>{
+            const d1=rollDie();
+            const d2=rollDie();
+            displayDice([d1,d2]);
+            const multiplier=1+(d2-1)*0.2;
+            const payout=payoutTable[d1]*multiplier;
+            document.getElementById('resultText').textContent=
+                `Die1:${d1} Die2:${d2} => Multiplier ${multiplier.toFixed(1)} Payout ${payout.toFixed(2)}`;
+            updateBankroll(payout);
+        });
+    </script>
+</body>
+</html>
