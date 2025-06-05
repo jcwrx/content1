@@ -6,22 +6,26 @@
     <title>Dice Roller</title>
     <style>
         body { font-family: Arial, sans-serif; padding: 20px; }
-        #diceContainer {
-            display: flex;
-            flex-wrap: wrap;
-        }
-        #diceContainer span {
-            font-size: 50px;
-            margin: 5px;
-        }
+        #mainContainer { display: flex; }
+        #diceSide, #imageSide { flex: 1; padding: 10px; }
+        #diceContainer { display: flex; flex-wrap: wrap; }
+        #diceContainer span { font-size: 50px; margin: 5px; }
+        #imageSide img { max-width: 100%; height: auto; }
     </style>
 </head>
-<body>50
+<body>
     <h1>Dice Roller</h1>
-    <label for="diceCount">Number of dice:</label>
-    <input type="number" id="diceCount" min="1" value="1">
-    <button id="rollButton">Roll Dice</button>
-    <div id="diceContainer"></div>
+    <div id="mainContainer">
+        <div id="diceSide">
+            <label for="diceCount">Number of dice:</label>
+            <input type="number" id="diceCount" min="1" value="1">
+            <button id="rollButton">Roll Dice</button>
+            <div id="diceContainer"></div>
+        </div>
+        <div id="imageSide">
+            <img id="resultImage" src="" alt="Result image">
+        </div>
+    </div>
     <script>
         function getDieFace(value) {
             const faces = ['\u2680','\u2681','\u2682','\u2683','\u2684','\u2685'];
@@ -32,14 +36,22 @@
             const count = parseInt(document.getElementById('diceCount').value, 10) || 1;
             const container = document.getElementById('diceContainer');
             container.innerHTML = '';
+            let sum = 0;
             for (let i = 0; i < count; i++) {
                 const value = Math.floor(Math.random() * 6) + 1;
+                sum += value;
                 const span = document.createElement('span');
                 span.textContent = getDieFace(value);
                 if (value === 1) {
                     span.style.color = 'red';
                 }
                 container.appendChild(span);
+            }
+            const img = document.getElementById('resultImage');
+            if (sum % 3 === 0) {
+                img.src = 'https://static.vecteezy.com/system/resources/previews/022/393/258/non_2x/dragon-head-fire-legend-monster-generate-ai-photo.jpg';
+            } else {
+                img.src = 'https://images.pexels.com/photos/51311/cow-calf-cattle-stock-51311.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1';
             }
         }
 
